@@ -8,8 +8,8 @@ ARG DIESEL_CLI_VERSION=2.1.1
 
 RUN apt-get update \
     && apt-get install -y postgresql \
-    && rm -rf /var/lib/apt/lists/* \
-    && cargo install diesel_cli --version $DIESEL_CLI_VERSION --no-default-features --features postgres
+    && rm -rf /var/lib/apt/lists/*
+RUN cargo install diesel_cli --version $DIESEL_CLI_VERSION --no-default-features --features postgres
 
 WORKDIR /app
 COPY . /app
