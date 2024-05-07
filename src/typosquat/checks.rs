@@ -79,6 +79,32 @@ impl Check for Affixes {
                         package: suffixed,
                     });
                 }
+
+                // If the package being examined is wrapped in this affix and separator, then we
+                // should see if it exists without that wrapping in the popular crate corpus.
+                let prefix = format!("{affix}{separator}");
+                let suffix = format!("{separator}{affix}");
+                if let Some(stem) = name
+                    .strip_suffix(&suffix)
+                    .and_then(|stripped| stripped.strip_prefix(&prefix))
+                {
+                    if corpus.possible_squat(stem, name, package)? {
+                        squats.push(Squat::Custom {
+                            message: format!("adds the {prefix} prefix and {suffix} suffix"),
+                            package: stem.to_string(),
+                        })
+                    }
+                }
+
+                // Alternatively, let's see if wrapping the package in the separator and affix
+                // results in something popular; eg somebody trying to squat `foo` with `rs-foo-rs`.
+                let wrapped = format!("{prefix}{name}{suffix}");
+                if corpus.possible_squat(&wrapped, name, package)? {
+                    squats.push(Squat::Custom {
+                        message: format!("removes the {combo} suffix"),
+                        package: wrapped,
+                    });
+                }
             }
         }
 
@@ -127,6 +153,7 @@ mod tests {
         for package in [
             TestPackage::new("foo-rs", "no shared author", ["Charlie"]),
             TestPackage::new("rs-foo", "no shared author", ["Charlie"]),
+            TestPackage::new("rs-foo-rs", "no shared author", ["Charlie"]),
             TestPackage::new("quux", "libquux", ["Charlie"]),
             TestPackage::new("quux_sys_rs", "libquux... for Rust?", ["Charlie"]),
             TestPackage::new("xyz", "unprefixed core-xyz", ["Charlie"]),

@@ -73,10 +73,13 @@ jobs:
       - name: Build Docker image
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login -u ${{ github.actor }} --password-stdin ghcr.io
+          docker pull ghcr.io/raniz85/pipeline-stuff:latest
           docker buildx build \
             -t pipeline-stuff:latest \
             -f backend.Dockerfile \
-            --cache-from type=registry,ref=ghcr.io/raniz85/pipeline-stuff:latest .
+            --cache-from ghcr.io/raniz85/pipeline-stuff:latest \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            .
 
       - name: Push Docker image
         if: ${{ github.ref == 'refs/heads/main' }}
